@@ -12,7 +12,7 @@ random.seed(0)
 torch.manual_seed(0)
 
 LR=0.01
-EPOCHS=10
+EPOCHS=2
 TRAIN_BATCH=16
 TEST_BATCH=1024
 
@@ -25,8 +25,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class ANN(nn.Module):
     def __init__(self,in_features,num_classes):
         super().__init__()
-        self.fc1=nn.Linear(in_features=in_features,out_features=512)
-        self.fc2=nn.Linear(in_features=512,out_features=num_classes)
+        self.fc1=nn.Linear(in_features=in_features,out_features=8)
+        self.fc2=nn.Linear(in_features=8,out_features=num_classes)
     def forward(self,x):
         pred=F.relu(self.fc1(x))
         pred=self.fc2(pred)
@@ -58,19 +58,32 @@ def train(train_loader, model, optimizer, criterion):
         incorrect += torch.sum(output.argmax(axis=1) != target)
     return np.mean(losses), (100.0 * correct / (correct+incorrect))
 
+def update_res(res,output,target):
+    for i in range(target.shape[0]):
+        if(output[i]==target[i]==1):
+            res["tp"]+=1
+        elif(output[i]!=target[i] and target[i]==1):
+            res["fn"]+=1
+        elif(output[i]==target[i]==0):
+            res["tn"]+=1
+        else:
+            res["fp"]+=1
+
 def test(test_loader, model, criterion):
     model=model.eval()
     losses = []
     correct = 0
     incorrect=0
+    res={"fp":0,"tp":0,"fn":0,"tn":0}
     with torch.no_grad():
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = model(data)
             losses.append(criterion(output, target).item())
+            update_res(res,output.argmax(axis=1),target)
             correct += torch.sum(output.argmax(axis=1) == target)
             incorrect += torch.sum(output.argmax(axis=1) != target)
-    return np.mean(losses), (100.0 * correct / (correct+incorrect))
+    return np.mean(losses), (100.0 * correct / (correct+incorrect)), res
 
 def load_data():
     features,labels=utils.preproc_data(*utils.load_data())
@@ -110,10 +123,11 @@ def main():
     for epoch in range(EPOCHS):
         train_loss,train_acc=train(train_loader,model,optimizer,criterion)
         train_losses.append(train_loss)
-        test_loss,test_acc=test(test_loader,model,criterion)
+        test_loss,test_acc,test_res=test(test_loader,model,criterion)
         test_losses.append(test_loss)
         print(f'Epoch: {epoch}, Train Loss: {train_loss}, Test Loss: {test_loss}')
     plt_losses(train_losses,test_losses)
     print(f'Accuracy: {test_acc}')
+    print(f'fp: {test_res["fp"]}, tp: {test_res["tp"]}, fn: {test_res["fn"]}, tn: {test_res["tn"]}')
 
 main()
