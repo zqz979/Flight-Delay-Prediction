@@ -4,7 +4,6 @@ import torch
 import random
 import torch.nn.functional as F
 from torch import nn, optim
-from torch.utils.data import TensorDataset
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
@@ -17,10 +16,11 @@ EPOCHS=10
 TRAIN_BATCH=16
 TEST_BATCH=1024
 
+NUM_CLASSES=2
+
 NUM_WORKERS=0
 
-use_cuda = torch.cuda.is_available()
-device = torch.device('cuda' if use_cuda else 'cpu')
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class ANN(nn.Module):
     def __init__(self,in_features,num_classes):
@@ -31,6 +31,15 @@ class ANN(nn.Module):
         pred=F.relu(self.fc1(x))
         pred=self.fc2(pred)
         return pred
+    
+class SparseDataset(torch.utils.data.Dataset):
+    def __init__(self,data,labels):
+        self.data=data
+        self.labels=labels
+    def __len__(self):
+        return len(self.labels)
+    def __getitem__(self,index):
+        return self.data[index].toarray()[0],self.labels[index]
     
 def train(train_loader, model, optimizer, criterion):
     model=model.train()
@@ -45,8 +54,8 @@ def train(train_loader, model, optimizer, criterion):
         loss.backward()
         optimizer.step()
         losses.append(loss.item())
-        correct += torch.sum(output.argmax(axis=1) == target.argmax(axis=1))
-        incorrect += torch.sum(output.argmax(axis=1) != target.argmax(axis=1))
+        correct += torch.sum(output.argmax(axis=1) == target)
+        incorrect += torch.sum(output.argmax(axis=1) != target)
     return np.mean(losses), (100.0 * correct / (correct+incorrect))
 
 def test(test_loader, model, criterion):
@@ -59,26 +68,26 @@ def test(test_loader, model, criterion):
             data, target = data.to(device), target.to(device)
             output = model(data)
             losses.append(criterion(output, target).item())
-            correct += torch.sum(output.argmax(axis=1) == target.argmax(axis=1))
-            incorrect += torch.sum(output.argmax(axis=1) != target.argmax(axis=1))
+            correct += torch.sum(output.argmax(axis=1) == target)
+            incorrect += torch.sum(output.argmax(axis=1) != target)
     return np.mean(losses), (100.0 * correct / (correct+incorrect))
 
 def load_data():
     features,labels=utils.preproc_data(*utils.load_data())
     x_train, x_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=4)
     train_loader=torch.utils.data.DataLoader(
-        TensorDataset(torch.from_numpy(x_train),torch.from_numpy(y_train)),
+        SparseDataset(x_train,y_train),
         batch_size=TRAIN_BATCH,
         num_workers=NUM_WORKERS,
         pin_memory=True
     )
     test_loader=torch.utils.data.DataLoader(
-        TensorDataset(torch.from_numpy(x_test),torch.from_numpy(y_test)),
+        SparseDataset(x_test,y_test),
         batch_size=TEST_BATCH,
         num_workers=NUM_WORKERS,
         pin_memory=True
     )
-    return train_loader, test_loader, features.shape[1], labels.shape[1]
+    return train_loader, test_loader, features.shape[1], NUM_CLASSES
 
 def plt_losses(train_losses,test_losses):
     plt.figure()
