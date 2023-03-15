@@ -12,21 +12,22 @@ random.seed(0)
 torch.manual_seed(0)
 
 LR=0.01
-EPOCHS=2
-TRAIN_BATCH=16
+EPOCHS=10
+TRAIN_BATCH=256
 TEST_BATCH=1024
 
 NUM_CLASSES=2
 
 NUM_WORKERS=0
+PIN_MEMORY=True
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class ANN(nn.Module):
     def __init__(self,in_features,num_classes):
         super().__init__()
-        self.fc1=nn.Linear(in_features=in_features,out_features=8)
-        self.fc2=nn.Linear(in_features=8,out_features=num_classes)
+        self.fc1=nn.Linear(in_features=in_features,out_features=256)
+        self.fc2=nn.Linear(in_features=256,out_features=num_classes)
     def forward(self,x):
         pred=F.relu(self.fc1(x))
         pred=self.fc2(pred)
@@ -92,13 +93,13 @@ def load_data():
         SparseDataset(x_train,y_train),
         batch_size=TRAIN_BATCH,
         num_workers=NUM_WORKERS,
-        pin_memory=True
+        pin_memory=PIN_MEMORY
     )
     test_loader=torch.utils.data.DataLoader(
         SparseDataset(x_test,y_test),
         batch_size=TEST_BATCH,
         num_workers=NUM_WORKERS,
-        pin_memory=True
+        pin_memory=PIN_MEMORY
     )
     return train_loader, test_loader, features.shape[1], NUM_CLASSES
 
@@ -130,4 +131,5 @@ def main():
     print(f'Accuracy: {test_acc}')
     print(f'fp: {test_res["fp"]}, tp: {test_res["tp"]}, fn: {test_res["fn"]}, tn: {test_res["tn"]}')
 
-main()
+if __name__ == "__main__":
+    main()
