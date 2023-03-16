@@ -7,6 +7,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 CODE2STOCK={"UA":"UAL","AA":"AAL","AS":"ALK","B6":"JBLU","DL":"DAL","HA":"HA","NK":"SAVE","OO":"SKYW","WN":"LUV","G4":"ALGT"}
 NO_STOCK=["EV","VX","9E","MQ","OH","YX","QX","F9","YV"]
+NO_1HOT_COLS=["AIR_STOCK","DOW","NASDAQ","DEP_TIME","CRS_DEP_TIME","DEP_DELAY","DEP_DELAY_NEW","DEP_DEL15","TAXI_OUT","WHEELS_OFF","WHEELS_ON","TAXI_IN","CRS_ARR_TIME","ARR_TIME","ARR_DELAY","ARR_DELAY_NEW","ARR_DEL15","CANCELLED","DIVERTED","CRS_ELAPSED_TIME","ACTUAL_ELAPSED_TIME","AIR_TIME","FLIGHTS","DISTANCE"]
 
 def _clean_bts_data(input_dir_path="./raw_bts_data",output_path="./data/bts_data.csv"):
     df=None
@@ -74,42 +75,12 @@ def _merge_bts_stock(bts_path="./data/bts_data.csv",stock_path="./data/stock_dat
     df=bts.dropna()
     df.to_csv(output_path,index=False)
 
-def load_data(input_path="./data/all_data.csv"):
-    df=pd.read_csv(input_path)
-    labels=df["ARR_DEL15"].to_frame()
-    features=df.drop("ARR_DEL15",axis=1)
-    return features,labels
-
-def _preproc_features_one_hot(df,max_uniques=60):
-    no_1hot_cols=["AIR_STOCK","DOW","NASDAQ","DEP_TIME","CRS_DEP_TIME","DEP_DELAY","DEP_DELAY_NEW","DEP_DEL15","TAXI_OUT","WHEELS_OFF","WHEELS_ON","TAXI_IN","CRS_ARR_TIME","ARR_TIME","ARR_DELAY","ARR_DELAY_NEW","ARR_DEL15","CANCELLED","DIVERTED","CRS_ELAPSED_TIME","ACTUAL_ELAPSED_TIME","AIR_TIME","FLIGHTS","DISTANCE"]
-    for col in df.columns:
-        if(len(df[col].unique())<=1):
-            df=df.drop(col,axis=1)
-    cols=df.columns
-    cols=[col for col in cols if col not in no_1hot_cols]
-    for col in cols:
-        if(len(df[col].unique())>=max_uniques):
-            df=df.drop(col,axis=1)
-        else:
-            one_hot = pd.get_dummies(df[col],prefix=col)
-            df = df.drop(col,axis = 1)
-            df = df.join(one_hot)
-    df=(df-df.mean())/df.std()
-    return df.to_numpy(dtype=np.float32)
-
-def _preproc_labels_one_hot(df):
-    one_hot = pd.get_dummies(df["ARR_DEL15"],prefix="ARR_DEL15")
-    df = df.drop("ARR_DEL15",axis = 1)
-    df = df.join(one_hot)
-    return df.to_numpy(dtype=np.float32)
-
 def _preproc_features(df):
-    no_1hot_cols=["AIR_STOCK","DOW","NASDAQ","DEP_TIME","CRS_DEP_TIME","DEP_DELAY","DEP_DELAY_NEW","DEP_DEL15","TAXI_OUT","WHEELS_OFF","WHEELS_ON","TAXI_IN","CRS_ARR_TIME","ARR_TIME","ARR_DELAY","ARR_DELAY_NEW","ARR_DEL15","CANCELLED","DIVERTED","CRS_ELAPSED_TIME","ACTUAL_ELAPSED_TIME","AIR_TIME","FLIGHTS","DISTANCE"]
     for col in df.columns:
         if(len(df[col].unique())<=1):
             df=df.drop(col,axis=1)
     cols=df.columns
-    cols=[col for col in cols if col not in no_1hot_cols]
+    cols=[col for col in cols if col not in NO_1HOT_COLS]
     df1=OneHotEncoder().fit_transform(df[cols])
     df2=df.drop(cols,axis=1)
     df2=(df2-df2.mean())/df2.std()
@@ -120,7 +91,34 @@ def _preproc_features(df):
 def _preproc_labels(df):
     return df["ARR_DEL15"].to_numpy(dtype=np.longlong)
 
-def preproc_data(features, labels, one_hot=False):
-    if(one_hot):
-        return _preproc_features_one_hot(features),_preproc_labels_one_hot(labels)
+def preproc_features_df(df):
+    for col in df.columns:
+        if(len(df[col].unique())<=1):
+            df=df.drop(col,axis=1)
+    cols=df.columns
+    cols=[col for col in cols if col not in NO_1HOT_COLS]
+    for col in cols:
+        one_hot = pd.get_dummies(df[col],prefix=col)
+        df = df.drop(col,axis = 1)
+        df = df.join(one_hot)
+    return df
+
+def preproc_labels_df(df):
+    return df["ARR_DEL15"]
+
+def feature_label_split(df):
+    labels=df["ARR_DEL15"].to_frame()
+    features=df.drop("ARR_DEL15",axis=1)
+    return features,labels
+
+def preproc_data(features, labels):
     return _preproc_features(features),_preproc_labels(labels)
+
+def load_data(input_path="./data/all_data.csv",separate=True):
+    df=pd.read_csv(input_path)
+    if(separate==False):
+        return df
+    return feature_label_split(df)
+
+if __name__ == "__main__":
+    pass
