@@ -3,7 +3,7 @@ import numpy as np
 import yfinance as yf
 import os
 import scipy
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 
 CODE2STOCK={"UA":"UAL","AA":"AAL","AS":"ALK","B6":"JBLU","DL":"DAL","HA":"HA","NK":"SAVE","OO":"SKYW","WN":"LUV","G4":"ALGT"}
 NO_STOCK=["EV","VX","9E","MQ","OH","YX","QX","F9","YV"]
@@ -91,12 +91,16 @@ def _preproc_features(df):
 def _preproc_labels(df):
     return df["ARR_DEL15"].to_numpy(dtype=np.longlong)
 
-def preproc_features_df(df):
+def preproc_features_df(df,ordinal=False):
     for col in df.columns:
         if(len(df[col].unique())<=1):
             df=df.drop(col,axis=1)
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
+    if(ordinal):
+        enc=OrdinalEncoder().set_output(transform="pandas")
+        df1=enc.fit_transform(df[cols])
+        return pd.concat([df1,df.drop(cols,axis=1)],axis=1)
     for col in cols:
         one_hot = pd.get_dummies(df[col],prefix=col)
         df = df.drop(col,axis = 1)
