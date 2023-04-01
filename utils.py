@@ -135,5 +135,11 @@ def load_bts_data(input_path="./data/all_data.csv",separate=True):
         return df
     return feature_label_split(df)
 
+def no_covid_data(df):
+    return df[df['YEAR']<2020]
+
+def covid_data(df):
+    return df[df['YEAR']>=2020]
+
 if __name__ == "__main__":
     pass
