@@ -3,7 +3,7 @@ import math
 import utils
 from sklearn.feature_selection import SelectKBest
 
-AMNT_DROPPED=0.9
+AMNT_DROPPED=0.99
 
 def ordinal_best(df):
     features,labels=utils.feature_label_split(df)

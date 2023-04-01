@@ -8,6 +8,8 @@ from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 CODE2STOCK={"UA":"UAL","AA":"AAL","AS":"ALK","B6":"JBLU","DL":"DAL","HA":"HA","NK":"SAVE","OO":"SKYW","WN":"LUV","G4":"ALGT"}
 NO_STOCK=["EV","VX","9E","MQ","OH","YX","QX","F9","YV"]
 NO_1HOT_COLS=["AIR_STOCK","DOW","NASDAQ","DEP_TIME","CRS_DEP_TIME","DEP_DELAY","DEP_DELAY_NEW","DEP_DEL15","TAXI_OUT","WHEELS_OFF","WHEELS_ON","TAXI_IN","CRS_ARR_TIME","ARR_TIME","ARR_DELAY","ARR_DELAY_NEW","ARR_DEL15","CANCELLED","DIVERTED","CRS_ELAPSED_TIME","ACTUAL_ELAPSED_TIME","AIR_TIME","FLIGHTS","DISTANCE"]
+EX_BANNED=['DEP_TIME','DEP_DELAY','TAXI_OUT','WHEELS_OFF']
+NEW_COLS=['NASDAQ','DOW','AIR_STOCK']
 
 def _clean_bts_data(input_dir_path="./raw_bts_data",output_path="./data/bts_data.csv"):
     df=None
@@ -75,10 +77,15 @@ def _merge_bts_stock(bts_path="./data/bts_data.csv",stock_path="./data/stock_dat
     df=bts.dropna()
     df.to_csv(output_path,index=False)
 
-def _preproc_features(df):
+def _final_clean(output_path="./data/all_data.csv"):
+    df=load_data(separate=False)
     for col in df.columns:
         if(len(df[col].unique())<=1):
             df=df.drop(col,axis=1)
+    df=df.drop(EX_BANNED,axis=1)
+    df.to_csv(output_path,index=False)
+
+def _preproc_features(df):
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
     df1=OneHotEncoder().fit_transform(df[cols])
@@ -92,9 +99,6 @@ def _preproc_labels(df):
     return df["ARR_DEL15"].to_numpy(dtype=np.longlong)
 
 def preproc_features_df(df,ordinal=False):
-    for col in df.columns:
-        if(len(df[col].unique())<=1):
-            df=df.drop(col,axis=1)
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
     if(ordinal):
@@ -120,6 +124,13 @@ def preproc_data(features, labels):
 
 def load_data(input_path="./data/all_data.csv",separate=True):
     df=pd.read_csv(input_path)
+    if(separate==False):
+        return df
+    return feature_label_split(df)
+
+def load_bts_data(input_path="./data/all_data.csv",separate=True):
+    df=load_data(input_path,False)
+    df=df.drop(NEW_COLS,axis=1)
     if(separate==False):
         return df
     return feature_label_split(df)
