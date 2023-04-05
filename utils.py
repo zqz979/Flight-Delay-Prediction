@@ -4,6 +4,8 @@ import yfinance as yf
 import os
 import scipy
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
+from sklearn.utils import resample
+import warnings
 
 CODE2STOCK={"UA":"UAL","AA":"AAL","AS":"ALK","B6":"JBLU","DL":"DAL","HA":"HA","NK":"SAVE","OO":"SKYW","WN":"LUV","G4":"ALGT"}
 NO_STOCK=["EV","VX","9E","MQ","OH","YX","QX","F9","YV"]
@@ -98,6 +100,23 @@ def _preproc_features(df):
 def _preproc_labels(df):
     return df["ARR_DEL15"].to_numpy(dtype=np.longlong)
 
+def _resample(df):
+    pos=df[df['ARR_DEL15']==1]
+    neg=df[df['ARR_DEL15']==0]
+    if(len(pos)>len(neg)):
+        return pd.concat([neg,resample(pos, replace=False, n_samples=len(neg))])
+    else:
+        return pd.concat([pos,resample(neg, replace=False, n_samples=len(pos))])
+    
+def _subsample(df,perc):
+    return resample(df, replace=False, n_samples=round(len(df)*perc))
+
+def _no_covid_data(df):
+    return df[df['YEAR']<2020]
+
+def _covid_data(df):
+    return df[df['YEAR']>=2020]
+
 def preproc_features_df(df,ordinal=False):
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
@@ -122,24 +141,30 @@ def feature_label_split(df):
 def preproc_data(features, labels):
     return _preproc_features(features),_preproc_labels(labels)
 
-def load_data(input_path="./data/all_data.csv",separate=True):
+def load_data(input_path="./data/all_data.csv",*,separate=True,resample=False,subsample=1.0,bts_only=False,covid=None):
     df=pd.read_csv(input_path)
+    if(covid==True):
+        df=_covid_data(df)
+    elif(covid==False):
+        df=_no_covid_data(df)
+    if(bts_only):
+        df=df.drop(NEW_COLS,axis=1)
+    if(subsample != 1.0):
+        df=_subsample(df,subsample)
+    if(resample):
+        df=_resample(df)
     if(separate==False):
         return df
     return feature_label_split(df)
 
 def load_bts_data(input_path="./data/all_data.csv",separate=True):
+    warnings.warn('Deprecated and will be removed in a future version. Use load_data(bts_only=True) instead.')
     df=load_data(input_path,False)
     df=df.drop(NEW_COLS,axis=1)
     if(separate==False):
         return df
     return feature_label_split(df)
 
-def no_covid_data(df):
-    return df[df['YEAR']<2020]
-
-def covid_data(df):
-    return df[df['YEAR']>=2020]
-
 if __name__ == "__main__":
-    pass
+    df=load_data(separate=False,resample=True)
+    print('hi')
