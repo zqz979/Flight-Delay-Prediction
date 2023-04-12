@@ -141,8 +141,15 @@ def feature_label_split(df):
 def preproc_data(features, labels):
     return _preproc_features(features),_preproc_labels(labels)
 
-def load_data(input_path="./data/all_data.csv",*,separate=True,resample=False,subsample=1.0,bts_only=False,covid=None):
+def load_data(input_path="./data/all_data.csv",*,separate=True,resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False):
     df=pd.read_csv(input_path)
+    if(select_features):
+        df=df[['DAY_OF_MONTH','OP_UNIQUE_CARRIER','ORIGIN_AIRPORT_ID',
+           'DEST_AIRPORT_ID','CRS_DEP_TIME', 'ARR_DEL15','NASDAQ', 'DOW', 'AIR_STOCK']]
+    if(stock_only):
+        nc=NEW_COLS
+        nc.append('ARR_DEL15')
+        df=df[nc]
     if(covid==True):
         df=_covid_data(df)
     elif(covid==False):
