@@ -6,6 +6,7 @@ import scipy
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
 from sklearn.utils import resample
 import warnings
+import pickle
 
 CODE2STOCK={"UA":"UAL","AA":"AAL","AS":"ALK","B6":"JBLU","DL":"DAL","HA":"HA","NK":"SAVE","OO":"SKYW","WN":"LUV","G4":"ALGT"}
 NO_STOCK=["EV","VX","9E","MQ","OH","YX","QX","F9","YV"]
@@ -87,11 +88,15 @@ def _final_clean(output_path="./data/all_data.csv"):
     df=df.drop(EX_BANNED,axis=1)
     df.to_csv(output_path,index=False)
 
-def _preproc_features(df):
+def _preproc_features(df,save=False):
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
-    df1=OneHotEncoder().fit_transform(df[cols])
+    enc=OneHotEncoder().fit(df[cols])
+    df1=enc.transform(df[cols])
     df2=df.drop(cols,axis=1)
+    if(save):
+        with open('./preproc.sav', 'wb') as file:
+            pickle.dump({'enc':enc,'mean':df2.mean(),'std':df2.std()}, file)
     df2=(df2-df2.mean())/df2.std()
     df2=scipy.sparse.csr_matrix(df2.values)
     sp=scipy.sparse.hstack([df1,df2])
