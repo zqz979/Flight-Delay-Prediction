@@ -178,5 +178,4 @@ def load_bts_data(input_path="./data/all_data.csv",separate=True):
     return feature_label_split(df)
 
 if __name__ == "__main__":
-    df=load_data(separate=False,resample=True)
-    print('hi')
+    pass
