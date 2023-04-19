@@ -8,6 +8,7 @@
 ### Option 2
 * Upload utils.py to the Colab file system
 * Upload data to the Colab file system
+* Dependencies will need to be installed. For example, yfinance is likely not yet installed.
 * Run any notebook
 ### Option 3
 * Copy paste everything from utils.py into a notebook
