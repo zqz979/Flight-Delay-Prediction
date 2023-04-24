@@ -146,7 +146,7 @@ def feature_label_split(df):
 def preproc_data(features, labels):
     return _preproc_features(features),_preproc_labels(labels)
 
-def load_data(input_path="./data/all_data.csv",*,separate=True,resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False):
+def load_data(input_path="./data/all_data.csv",separate=True,resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False):
     df=pd.read_csv(input_path)
     if(select_features):
         df=df[['DAY_OF_MONTH','OP_UNIQUE_CARRIER','ORIGIN_AIRPORT_ID',
@@ -171,7 +171,7 @@ def load_data(input_path="./data/all_data.csv",*,separate=True,resample=False,su
 
 def load_bts_data(input_path="./data/all_data.csv",separate=True):
     warnings.warn('Deprecated and will be removed in a future version. Use load_data(bts_only=True) instead.')
-    df=load_data(input_path,False)
+    df=load_data(input_path,separate=False)
     df=df.drop(NEW_COLS,axis=1)
     if(separate==False):
         return df
