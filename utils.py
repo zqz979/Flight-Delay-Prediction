@@ -88,9 +88,14 @@ def _final_clean(output_path="./data/all_data.csv"):
     df=df.drop(EX_BANNED,axis=1)
     df.to_csv(output_path,index=False)
 
-def _preproc_features(df,save=False):
+def _preproc_features(df,ordinal,save=False):
     cols=df.columns
     cols=[col for col in cols if col not in NO_1HOT_COLS]
+    if(ordinal):
+        enc=OrdinalEncoder().fit(df[cols])
+        df1=enc.transform(df[cols])
+        df2=df.drop(cols,axis=1).to_numpy(dtype=np.float32)
+        return np.concatenate([df1,df2],axis=1)
     enc=OneHotEncoder().fit(df[cols])
     df1=enc.transform(df[cols])
     df2=df.drop(cols,axis=1)
@@ -143,8 +148,8 @@ def feature_label_split(df):
     features=df.drop("ARR_DEL15",axis=1)
     return features,labels
 
-def preproc_data(features, labels):
-    return _preproc_features(features),_preproc_labels(labels)
+def preproc_data(features, labels, ordinal=False):
+    return _preproc_features(features,ordinal),_preproc_labels(labels)
 
 def load_data(input_path="./data/all_data.csv",separate=True,resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False):
     df=pd.read_csv(input_path)
