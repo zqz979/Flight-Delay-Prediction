@@ -14,4 +14,4 @@
 * Copy paste everything from utils.py into a notebook
 * Change syntax to avoid errors (i.e., remove "import utils", and "utils.*")
 ## Notes
-* To reproduce results, load_data() will need to be called with the associated parameters for some notebooks
+* To reproduce results, utils.load_data() will need to be called with the associated parameters for some notebooks
