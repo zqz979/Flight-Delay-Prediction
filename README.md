@@ -15,3 +15,12 @@
 * Change syntax to avoid errors (i.e., remove "import utils", and "utils.*")
 ## Notes
 * To reproduce results, utils.load_data() will need to be called with the associated parameters for some notebooks. Examples are given in "KNN Model.ipynb"
+* For convenience, here are the tests:
+    * utils.load_data(resample=True,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False)
+    * utils.load_data(resample=True,subsample=0.25,bts_only=False,covid=None,stock_only=False,select_features=False)
+    * utils.load_data(resample=True,subsample=1.0,bts_only=True,covid=None,stock_only=False,select_features=False)
+    * utils.load_data(resample=True,subsample=1.0,bts_only=True,covid=False,stock_only=False,select_features=False)
+    * utils.load_data(resample=True,subsample=1.0,bts_only=True,covid=True,stock_only=False,select_features=False)
+    * utils.load_data(resample=True,subsample=1.0,bts_only=False,covid=None,stock_only=True,select_features=False)
+    * utils.load_data(resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=False)
+    * utils.load_data(resample=False,subsample=1.0,bts_only=False,covid=None,stock_only=False,select_features=True)
